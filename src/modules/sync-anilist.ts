@@ -173,7 +173,7 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
   const notion = notionSettings.notion
   if (!additional.fullSync) {
     const d = new Date(entry.updatedAt*1000)
-    if (notionSettings.Settings.LastMediaListUpdate > d) {
+    if (notionSettings.Settings.LastMediaListUpdate.date > d) {
       console.log(`ignoring ${entry.media.title.romaji}, hasn't been changed since last update`)
       return {status: "ignored", entry: entry.media.title.romaji}
     }
@@ -192,7 +192,7 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
       props["Total"] = {type: "number", number: entry.media.episodes ?? entry.media.chapters}
       update = true
     }
-    if (entry.status != res.properties["Status"].select.name) {
+    if (res.properties["Status"].select.name != "COMPLETED" && entry.status != res.properties["Status"].select.name) {
       props["Status"] = {type: "select", select: {name: entry.status}}
       update = true
     }

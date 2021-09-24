@@ -23,4 +23,22 @@ app.listen(port, () => {
 
 await notionSettings.SetLastStartDate(new Date())
 
+const i = setInterval(async x => {
+    try {
+        const s = await notionSettings.updateSettings()
+        if (s.RunMediaListUpdate.toggle) {
+            const d = new Date()
+            d.setMinutes(d.getMinutes() - 30)
+            if (d > s.LastMediaListUpdate.date) {
+                await updateMediaList()
+            }
+        } else if(s.RunMediaListUpdate.singleRun) {
+            console.log("switch - updating media list")
+            await notionSettings.SetRunMediaListUpdate(s.RunMediaListUpdate.toggle, false)
+            await updateMediaList()
+        }
+    }
+    catch (e) {console.error(`exception occured in settings update interval`)}
+}, 5*1000)
+
 // await updateMediaList()

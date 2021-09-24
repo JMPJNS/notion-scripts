@@ -18,21 +18,33 @@ export class NotionSettings {
         await notion.pages.update({properties: {Date: {type: "date", date: {start: d.toISOString()}}}, page_id: this._lastStartDate.page_id, archived: false})
         this._lastStartDate.date = d
     }
+
+    private _runMediaListUpdate: {page_id: string, toggle: boolean, singleRun: boolean}
+    public async SetRunMediaListUpdate(toggle: boolean, singleRun = false) {
+        await notion.pages.update({properties: {
+            "Single-Run": {type: "checkbox", checkbox: singleRun}, 
+            "Toggle": {type: "checkbox", checkbox: singleRun}
+        }, page_id: this._runMediaListUpdate.page_id, archived: false})
+        
+        this._runMediaListUpdate.toggle = toggle,
+        this._runMediaListUpdate.singleRun = singleRun
+    }
     
     public get Settings() {
         return {
-            LastMediaListUpdate: this._lastMediaListUpdate.date,
-            LastStartDate: this._lastStartDate.date
+            LastMediaListUpdate: this._lastMediaListUpdate,
+            LastStartDate: this._lastStartDate,
+            RunMediaListUpdate: this._runMediaListUpdate
         }
     }
 
     constructor(public notion: Client) {}
     async init() {
-        await this.parseSettings()
+        await this.updateSettings()
         return this
     }
 
-    private async parseSettings() {
+    public async updateSettings() {
         const rawSettings = await this.notion.databases.query({database_id: databases.statusDb})
         for (const x of rawSettings.results as any[]) {
             const name = x.properties.Name?.title?.[0].text.content
@@ -42,13 +54,22 @@ export class NotionSettings {
                 case "LastStartDate":
                     {
                     this._lastStartDate = {date: this.parseDate(x.properties.Date), page_id: x.id}
+                    break
                     }
                 case "LastMediaListUpdate":
                     {
                     this._lastMediaListUpdate = {date: this.parseDate(x.properties.Date), page_id: x.id}
+                    break
+                    }
+                case "RunMediaListUpdate":
+                    {
+                    this._runMediaListUpdate = {page_id: x.id, toggle: x.properties["Toggle"].checkbox, singleRun: x.properties["Single-Run"].checkbox}
+                    break
                     }
             }
         }
+
+        return this.Settings
     }
 
     private parseDate(x: any): Date | null {
