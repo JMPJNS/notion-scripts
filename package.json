@@ -10,6 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "@notionhq/client": "^0.3.2",
+    "@types/node": "^16.9.6",
+    "express": "^4.17.1",
     "node-fetch": "^3.0.0",
     "uuid": "^8.3.2"
   },

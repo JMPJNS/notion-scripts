@@ -2,7 +2,7 @@
     "compilerOptions": {
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true,
-        "target": "es2017",
+        "target": "es2021",
         "module": "esnext",
         "outDir": "dist",
         "sourceMap": true,

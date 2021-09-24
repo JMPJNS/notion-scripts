@@ -1,13 +1,26 @@
-import { Client } from "@notionhq/client"
-import { updateMediaList } from "./modules/sync-anilist.js"
-import { databases } from "./databases.js"
-import {v4 as uuid} from "uuid"
-import { Block } from "@notionhq/client/build/src/api-types"
-import { MediaListEntry } from "./types/medialist.js"
-import { PagesCreateResponse } from "@notionhq/client/build/src/api-endpoints"
+import notionSettings from "./notionSettings.js"
 
-const notion = new Client({
-    auth: process.env.NOTION_TOKEN
+import express from "express"
+import { updateMediaList } from "./modules/sync-anilist.js"
+const app = express()
+const port = process.env.PORT || 3000
+
+console.log("starting")
+
+app.get('/sync-anilist', async (req, res) => {
+    const r = await updateMediaList()
+    res.json(r)
 })
 
-await updateMediaList(notion)
+app.get('/sync-anilist/full', async (req, res) => {
+    const r = await updateMediaList(true)
+    res.json(r)
+})
+  
+app.listen(port, () => {
+    console.log(`app listening at http://localhost:${port}`)
+})
+
+await notionSettings.SetLastStartDate(new Date())
+
+// await updateMediaList()

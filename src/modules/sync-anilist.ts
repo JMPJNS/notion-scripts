@@ -4,11 +4,14 @@ import fetch from "node-fetch"
 import { databases } from "../databases.js"
 import type { AnilistResp, Entry } from "../types/anilist.js"
 import { MediaListEntry } from "../types/medialist.js"
+import notionSettings from "../notionSettings.js"
+
 
 const animeQuery = `query {
     MediaListCollection (userName: "JMPJNS", type:ANIME) {
       lists {
         entries {
+          updatedAt
           status
           score
           progress
@@ -64,6 +67,7 @@ const mangaQuery = `query {
 MediaListCollection (userName: "JMPJNS", type:MANGA) {
     lists {
     entries {
+        updatedAt
         status
         score
         progress
@@ -116,7 +120,7 @@ MediaListCollection (userName: "JMPJNS", type:MANGA) {
 }`
 
 
-export async function updateMediaList(notion: Client) {
+export async function updateMediaList(fullSync = false) {
     const animeRes = await fetch("https://graphql.anilist.co", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify({ query: animeQuery, variables: {} }) })
     const mangaRes = await fetch("https://graphql.anilist.co", { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify({ query: mangaQuery, variables: {} }) })
 
@@ -137,6 +141,8 @@ export async function updateMediaList(notion: Client) {
         }
     }
 
+    const changeLog = []
+
     for (const e of entries) {
         let type = "Anime"
         if (e.media.type == "MANGA") type = "Manga"
@@ -153,14 +159,25 @@ export async function updateMediaList(notion: Client) {
           continue
         }
 
-        await updateEntry(notion, e, {studio, author, type}).catch(error => {
+        const change = await updateEntry(e, {studio, author, type, fullSync}).catch(error => {
           console.error(`error occured on ${e.media.title.romaji}`, error)
         })
+
+        if (change) changeLog.push(change)
     }
+    await notionSettings.SetLastMediaListUpdate(new Date())
+    return changeLog
 }
 
-async function updateEntry(notion: Client, entry: Entry, additional: {studio: string, author: string, type: string}) {
-
+async function updateEntry(entry: Entry, additional: {studio: string, author: string, type: string, fullSync: boolean}) {
+  const notion = notionSettings.notion
+  if (!additional.fullSync) {
+    const d = new Date(entry.updatedAt*1000)
+    if (notionSettings.Settings.LastMediaListUpdate > d) {
+      console.log(`ignoring ${entry.media.title.romaji}, hasn't been changed since last update`)
+      return {status: "ignored", entry: entry.media.title.romaji}
+    }
+  }
   const found = await notion.databases.query({database_id: databases.mediaList, filter: {property: "Link", text: {contains: entry.media.siteUrl}}});
 
   if (found.results.length > 0) {
@@ -183,11 +200,11 @@ async function updateEntry(notion: Client, entry: Entry, additional: {studio: st
     if (update) {
       console.log(`updating ${entry.media.title.romaji}`)
       await notion.pages.update({page_id: res.id, properties: props as any, archived: false})
+      return {status: "updated", entry: entry.media.title.romaji}
     } else {
-      console.log(`ignoring ${entry.media.title.romaji}`)
+      console.log(`not updating ${entry.media.title.romaji}, nothing changed`)
+      return {status: "ignored", entry: entry.media.title.romaji}
     }
-
-    return
   }
 
   const props: MediaListEntry = {} as MediaListEntry
@@ -211,4 +228,6 @@ async function updateEntry(notion: Client, entry: Entry, additional: {studio: st
   await notion.blocks.children.append({block_id: (created as PagesCreateResponse).id, children: [
       {embed: {url: entry.media.coverImage.extraLarge}, type: "embed"} as any
   ]})
+
+  return {status: "inserted", entry: entry.media.title.romaji}
 }

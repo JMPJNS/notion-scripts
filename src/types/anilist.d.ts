@@ -22,6 +22,7 @@ export interface Entry {
     startedAt:       EntryDate
     completedAt:     EntryDate
     media:           Media
+    updatedAt:       number
 }
 
 export interface EntryDate {
