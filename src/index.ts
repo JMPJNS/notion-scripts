@@ -38,7 +38,7 @@ const i = setInterval(async x => {
             await updateMediaList()
         }
     }
-    catch (e) {console.error(`exception occured in settings update interval`)}
+    catch (e) {console.error(`[${new Date()}] exception occured in settings update interval`, e)}
 }, 5*1000)
 
 // await updateMediaList()
