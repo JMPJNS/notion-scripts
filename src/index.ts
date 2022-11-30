@@ -28,7 +28,7 @@ const i = setInterval(async x => {
         const s = await notionSettings.updateSettings()
         if (s.RunMediaListUpdate.toggle) {
             const d = new Date()
-            d.setMinutes(d.getMinutes() - 30)
+            d.setMinutes(d.getMinutes() - 12 * 60)
             if (d > s.LastMediaListUpdate.date) {
                 await updateMediaList()
             }
