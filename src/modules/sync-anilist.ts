@@ -188,8 +188,8 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
       props["Progress"] = {type: "number", number: entry.progress}
       update = true
     }
-    if ((entry.media.episodes ?? entry.media.chapters) > res.properties["Total"].number) {
-      props["Total"] = {type: "number", number: entry.media.episodes ?? entry.media.chapters}
+    if ((entry.media.episodes ?? entry.media.chapters) > res.properties["Total"].number || !res.properties["Total"].number) {
+      props["Total"] = {type: "number", number: entry.media.episodes ?? entry.media.chapters ?? entry.progress}
       update = true
     }
     if (res.properties["Status"].select.name != "COMPLETED" && entry.status != res.properties["Status"].select.name) {
@@ -218,7 +218,7 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
     props["English"] = {type: "rich_text", rich_text: [{type: "text", text: {content: entry.media.title.english}}]}
   props["Progress"] = {type: "number", number: entry.progress}
   if (entry.media.episodes ?? entry.media.chapters)
-    props["Total"] = {type: "number", number: entry.media.episodes ?? entry.media.chapters}
+    props["Total"] = {type: "number", number: entry.media.episodes ?? entry.media.chapters ?? entry.progress}
   props["Status"] = {type: "select", select: {name: entry.status}}
   props["Type"] = {type: "multi_select", multi_select: [{name: additional.type}]}
 
