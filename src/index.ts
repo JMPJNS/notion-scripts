@@ -32,13 +32,13 @@ const i = setInterval(async x => {
             d.setMinutes(d.getMinutes() - 12 * 60)
             if (d > s.LastMediaListUpdate.date) {
                 ranMediaListUpdate = true
-                await updateMediaList()
+                await updateMediaList(s.ForceFullMediaListUpdate.toggle)
             }
         } 
         if(s.RunMediaListUpdate.singleRun && !ranMediaListUpdate) {
             console.log("switch - updating media list")
             await notionSettings.SetRunMediaListUpdate(s.RunMediaListUpdate.toggle, false)
-            await updateMediaList()
+            await updateMediaList(s.ForceFullMediaListUpdate.toggle)
         }
     }
     catch (e) {console.error(`[${new Date()}] exception occured in settings update interval`, e)}

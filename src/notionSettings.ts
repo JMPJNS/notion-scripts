@@ -29,12 +29,15 @@ export class NotionSettings {
         this._runMediaListUpdate.toggle = toggle,
         this._runMediaListUpdate.singleRun = singleRun
     }
+
+    private _forceFullMediaListUpdate: {page_id: string, toggle: boolean}
     
     public get Settings() {
         return {
             LastMediaListUpdate: this._lastMediaListUpdate,
             LastStartDate: this._lastStartDate,
-            RunMediaListUpdate: this._runMediaListUpdate
+            RunMediaListUpdate: this._runMediaListUpdate,
+            ForceFullMediaListUpdate: this._forceFullMediaListUpdate,
         }
     }
 
@@ -64,6 +67,11 @@ export class NotionSettings {
                 case "RunMediaListUpdate":
                     {
                     this._runMediaListUpdate = {page_id: x.id, toggle: x.properties["Toggle"].checkbox, singleRun: x.properties["Single-Run"].checkbox}
+                    break
+                    }
+                case "ForceFullMediaListUpdate":
+                    {
+                    this._forceFullMediaListUpdate = {page_id: x.id, toggle: x.properties["Toggle"].checkbox}
                     break
                     }
             }
