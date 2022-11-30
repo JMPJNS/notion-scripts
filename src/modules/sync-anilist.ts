@@ -188,7 +188,7 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
       props["Progress"] = {type: "number", number: entry.progress}
       update = true
     }
-    if ((entry.media.episodes ?? entry.media.chapters) > res.properties["Total"].number || !res.properties["Total"].number) {
+    if (!(entry.media.episodes ?? entry.media.chapters) || (entry.media.episodes ?? entry.media.chapters) > res.properties["Total"].number || !res.properties["Total"].number) {
       props["Total"] = {type: "number", number: entry.media.episodes ?? entry.media.chapters ?? entry.progress}
       update = true
     }

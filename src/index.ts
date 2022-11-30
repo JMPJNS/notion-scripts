@@ -26,13 +26,16 @@ await notionSettings.SetLastStartDate(new Date())
 const i = setInterval(async x => {
     try {
         const s = await notionSettings.updateSettings()
+        let ranMediaListUpdate = false
         if (s.RunMediaListUpdate.toggle) {
             const d = new Date()
             d.setMinutes(d.getMinutes() - 12 * 60)
             if (d > s.LastMediaListUpdate.date) {
+                ranMediaListUpdate = true
                 await updateMediaList()
             }
-        } else if(s.RunMediaListUpdate.singleRun) {
+        } 
+        if(s.RunMediaListUpdate.singleRun && !ranMediaListUpdate) {
             console.log("switch - updating media list")
             await notionSettings.SetRunMediaListUpdate(s.RunMediaListUpdate.toggle, false)
             await updateMediaList()
