@@ -28,6 +28,7 @@ const animeQuery = `query {
             day
           }
           media {
+            id
             siteUrl
             coverImage {
               extraLarge
@@ -84,6 +85,7 @@ MediaListCollection (userName: "JMPJNS", type:MANGA) {
         day
         }
         media {
+        id
         siteUrl
         coverImage {
           extraLarge
@@ -144,6 +146,7 @@ export async function updateMediaList(fullSync = false) {
     const changeLog = []
 
     for (const e of entries) {
+      try {
         let type = "Anime"
         if (e.media.type == "MANGA") type = "Manga"
         if (e.media.type == "MANGA" && e.media.countryOfOrigin == "KR") type = "Manhwa"
@@ -164,6 +167,9 @@ export async function updateMediaList(fullSync = false) {
         })
 
         if (change) changeLog.push(change)
+      } catch (e) {
+        console.error("error updating entry", e)
+      }
     }
     await notionSettings.SetLastMediaListUpdate(new Date())
     return changeLog
@@ -174,7 +180,7 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
   if (!additional.fullSync) {
     const d = new Date(entry.updatedAt*1000)
     if (notionSettings.Settings.LastMediaListUpdate.date > d) {
-      console.log(`ignoring ${entry.media.title.romaji}, hasn't been changed since last update`)
+      // console.log(`ignoring ${entry.media.title.romaji}, hasn't been changed since last update`)
       return {status: "ignored", entry: entry.media.title.romaji}
     }
   }
@@ -184,6 +190,11 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
     let update = false
     const res: any = found.results[0]
     const props: MediaListEntry = {} as MediaListEntry
+    if (entry.media.id != res.properties["BackingId"].number) {
+      props["BackingProvider"] = {type: "rich_text", rich_text: [{text: {content: "anilist"}, type: "text"}]}
+      props["BackingId"] = {type: "number", number: entry.media.id}
+      update = true
+    }
     if (entry.progress > res.properties["Progress"].number) {
       props["Progress"] = {type: "number", number: entry.progress}
       update = true
@@ -208,6 +219,8 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
   }
 
   const props: MediaListEntry = {} as MediaListEntry
+  props["BackingProvider"] = {type: "rich_text", rich_text: [{text: {content: "anilist"}, type: "text"}]}
+      props["BackingId"] = {type: "number", number: entry.media.id}
   if (additional.studio ?? additional.author)
     props["Author / Studio"] = {type: "rich_text", rich_text: [{text: {content: additional.studio ?? additional.author}, type: "text"}]}
   props["Hype / Score"] = {type: "number", number: entry.score}

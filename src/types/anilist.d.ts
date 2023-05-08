@@ -32,6 +32,7 @@ export interface EntryDate {
 }
 
 export interface Media {
+    id:              number
     siteUrl:         string
     coverImage:      CoverImage
     title:           Title
