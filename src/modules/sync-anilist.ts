@@ -1,10 +1,10 @@
 import { Client } from "@notionhq/client/build/src"
-import { PagesCreateResponse } from "@notionhq/client/build/src/api-endpoints"
 import fetch from "node-fetch"
 import { databases } from "../databases.js"
 import type { AnilistResp, Entry } from "../types/anilist.js"
 import { MediaListEntry } from "../types/medialist.js"
 import notionSettings from "../notionSettings.js"
+import { CreatePageResponse } from "@notionhq/client/build/src/api-endpoints.js"
 
 
 const animeQuery = `query {
@@ -184,7 +184,22 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
       return {status: "ignored", entry: entry.media.title.romaji}
     }
   }
-  const found = await notion.databases.query({database_id: databases.mediaList, filter: {property: "Link", text: {contains: entry.media.siteUrl}}});
+  const found = await notion.databases.query({database_id: databases.mediaList, filter: {
+    and: [
+      {
+        property: "BackingProvider",
+        rich_text: { equals: "anilist" }
+      },
+      {
+        property: "BackingId",
+        number: { equals: entry.media.id }
+      },
+    ]
+  }});
+
+  if (found.results.length > 1) {
+    return new Error("found more than one entry for that url")
+  }
 
   if (found.results.length > 0) {
     let update = false
@@ -238,7 +253,7 @@ async function updateEntry(entry: Entry, additional: {studio: string, author: st
   console.log(`inserting ${entry.media.title.romaji}`)
   const created = await notion.pages.create({parent: {database_id: databases.mediaList}, properties: props as any}).catch(console.error)
 
-  await notion.blocks.children.append({block_id: (created as PagesCreateResponse).id, children: [
+  await notion.blocks.children.append({block_id: (created as CreatePageResponse).id, children: [
       {embed: {url: entry.media.coverImage.extraLarge}, type: "embed"} as any
   ]})
 
